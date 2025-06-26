@@ -55,8 +55,8 @@ async function main() {
   // Deploy VaultCore
   const VaultCore = await hre.ethers.getContractFactory("VaultCore");
   const vault = await VaultCore.deploy(priceFeedAddress);
-  await vault.deployed();
-  console.log("✅ VaultCore deployed at:", vault.address);
+
+  console.log("✅ VaultCore deployed at:", vault.target);
 }
 
 main().catch((error) => {

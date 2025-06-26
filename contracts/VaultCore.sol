@@ -2,10 +2,9 @@
 pragma solidity ^0.8.19;
 
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol"; // 👈 Import this
+import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
-
-contract VaultCore {
+contract VaultCore is AutomationCompatibleInterface {
     AggregatorV3Interface internal priceFeed;
 
     constructor(address _priceFeed) {
@@ -22,6 +21,7 @@ contract VaultCore {
     uint256 public loanId;
 
     event LoanIssued(address borrower, uint256 amount, uint256 loanId);
+    event LoanLiquidated(uint256 loanId);
 
     function borrow(uint256 amount) internal {
         loans[loanId] = Loan(msg.sender, amount, false);
@@ -34,7 +34,6 @@ contract VaultCore {
     }
 
     function checkHealth() external view returns (bool) {
-        // Placeholder logic for health factor
         return true;
     }
 
@@ -42,12 +41,11 @@ contract VaultCore {
         (, int price,,,) = priceFeed.latestRoundData();
         return price;
     }
-}
 
     function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool upkeepNeeded, bytes memory performData) {
         for (uint256 i = 0; i < loanId; i++) {
             if (!loans[i].repaid && _isUnhealthy(loans[i])) {
-                return (true, abi.encode(i)); // Found bad loan
+                return (true, abi.encode(i));
             }
         }
         return (false, "");
@@ -59,15 +57,12 @@ contract VaultCore {
     }
 
     function _isUnhealthy(Loan memory loan) internal view returns (bool) {
-        // Simulate a failing health factor (later link to Chainlink price feeds)
-        return loan.amount > 1 ether; // placeholder condition
+        return loan.amount > 1 ether;
     }
 
     function liquidateLoan(uint256 _loanId) public {
         require(!loans[_loanId].repaid, "Already repaid");
-        loans[_loanId].repaid = true; // Mark as liquidated for now
+        loans[_loanId].repaid = true;
         emit LoanLiquidated(_loanId);
     }
-
-    event LoanLiquidated(uint256 loanId);
-
+}
